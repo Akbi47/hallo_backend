@@ -1,0 +1,33 @@
+stages:
+  - build-develop
+  - deploy-develop
+
+variables:
+  VARIABLE_DATA: Gitlab-CI-YAML
+
+build-develop:
+  stage: build-develop
+  image: node:latest
+  script:
+    - npm install --legacy-peer-deps
+    - npm run prebuild
+    - npm run build
+  only:
+    - develop
+    - merge_requests
+
+deploy-develop:
+  stage: deploy-develop
+  needs: ['build-develop']
+  before_script:
+    - 'command -v ssh-agent >/dev/null || ( apk add --update openssh )'
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan $VM_IPADDRESS >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+  script:
+    - ssh $SSH_USER@$VM_IPADDRESS "cd project && cd Hallo-BE3 && git pull && yarn && yarn build && pm2 restart 6"
+  only:
+    - develop

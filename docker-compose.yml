@@ -1,0 +1,92 @@
+# Use root/example as user/password credentials
+version: '3.1'
+services:
+  mongodb:
+    container_name: database-mongo-ecommerce
+    image: mongo
+    restart: always
+    ports:
+      - "27020:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+  mongodb-prime:
+    container_name: mongodb-prime
+    image: mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    networks:
+      - mongo_replica
+    volumes:
+    - ./mongodb-keyfile.key:/mongodb-keyfile.key
+    - ./start-mongodb.sh:/start-mongodb.sh
+    depends_on:
+    - mongodb1
+    - mongodb2
+    command: ["/bin/bash", "/start-mongodb.sh"]
+    # command: chmod 600 /mongodb-keyfile.key mongod --keyFile /mongodb-keyfile.key --replSet "rs0"  
+    # command:  "mongod --bind_ip_all --replSet dbrs --keyFile  /mongodb-keyfile.key"
+    # command: "mongod --bind_ip_all --replSet replicaSet01 --keyFile /data/replica.key"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+      MONGO_INITDB_REPLICASET: rs0
+
+  mongodb1:
+    container_name: rep1
+    image: mongo
+    restart: always
+    ports:
+      - "27018:27017"
+    networks:
+      - mongo_replica
+    volumes:
+    - ./mongodb-keyfile.key:/mongodb-keyfile.key
+    - ./start-mongodb.sh:/start-mongodb.sh
+    command: ["/bin/bash", "/start-mongodb.sh"]
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+      MONGO_INITDB_REPLICASET: rs0
+
+  mongodb2:
+    container_name: rep2
+    image: mongo
+    restart: always
+    ports:
+      - "27019:27017"
+    networks:
+      - mongo_replica
+    volumes:
+    - ./mongodb-keyfile.key:/mongodb-keyfile.key
+    - ./start-mongodb.sh:/start-mongodb.sh
+    command: ["/bin/bash", "/start-mongodb.sh"]
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+      MONGO_INITDB_REPLICASET: rs0
+
+  # mongodb-testing:
+  #   container_name: database-mongo-ecommerce-testing
+  #   image: mongo
+  #   restart: always
+  #   ports:
+  #     - "27016:27017"
+  #   environment:
+  #     MONGO_INITDB_ROOT_USERNAME: root
+  #     MONGO_INITDB_ROOT_PASSWORD: example
+
+  redis:
+    image: 'redis:6-alpine'
+    container_name: redis-hallo
+    ports:
+      - 6379:6379
+volumes:
+  mongodb-prime:
+  mongodb1:
+  mongodb2:
+
+networks:
+  mongo_replica:
+    driver: bridge

@@ -1,0 +1,11 @@
+image: docker:latest
+services:
+- mongo
+before_script:
+- docker info
+build:
+  stage: build
+  script:
+  - docker build -t wandeling .
+  - ping mongo -c 50
+  - docker run  -e "configfile=configuration-staging" wandeling
